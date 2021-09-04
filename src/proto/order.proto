@@ -20,3 +20,16 @@ message Query {
   required Side side = 2;
   required string symbol = 3;
 }
+
+message View {
+  required string uid = 1;
+  enum Side {
+    BUY = 0;
+    SELL = 1;
+  }
+  required Side side = 2;
+  required string symbol = 3;
+  required double price = 4;
+  required int32 start = 5;
+  required int32 stop = 6;
+}

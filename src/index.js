@@ -17,10 +17,15 @@ import createMessageHandler from './handleMessage'
   await redisClient.connect()
 
   const clients = {}
-  const wss = new WebSocketServer({ port: process.env.PORT || 9696 })
+  const wss = new WebSocketServer({
+    host: '0.0.0.0',
+    port: process.env.PORT || 9696,
+  })
 
   wss.on('connection', (ws, req) => {
-    const [, uid] = req.url.split('/')
+    const url = new URL(req.url, process.env.BASE_URL)
+    const uid = url.searchParams.get('user')
+    const key = url.searchParams.get('key')
 
     const handleMessage = createMessageHandler(uid, redisClient)
 
