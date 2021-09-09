@@ -1,4 +1,5 @@
 import protobuf from 'protobufjs'
+import matchOrder from './matchOrder'
 
 const createMessageHandler = (uid, redisClient) => async (rawMessage) => {
   const json = JSON.parse(rawMessage)
@@ -38,9 +39,23 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
   const orderString = `${side}:${symbol}@${price}`
   console.log(`order:${uid}:${orderString}`)
 
-  await redisClient.RPUSH(orderString, JSON.stringify({ uid, ts }))
+  const matchedOrder = await matchOrder({ side, symbol, price, redisClient })
 
-  return { type: 'order', message: `Order submitted at ${ts}` }
+  if (matchedOrder) {
+    return {
+      type: 'match',
+      message: `Order matched`,
+      data: {
+        matchedBy: matchedOrder.uid,
+        matchedAt: Date.now(),
+        yourOrder: { order: orderString, uid, ts },
+        matchedOrder,
+      },
+    }
+  } else {
+    await redisClient.RPUSH(orderString, JSON.stringify({ uid, ts }))
+    return { type: 'order', message: `Order submitted to queue at ${ts}` }
+  }
 }
 
 const handleQuery = async ({ data, uid, proto, redisClient }) => {

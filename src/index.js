@@ -27,11 +27,30 @@ import createMessageHandler from './handleMessage'
     const uid = url.searchParams.get('user')
     const key = url.searchParams.get('key')
 
+    console.log(`connected:${uid}`)
+
     const handleMessage = createMessageHandler(uid, redisClient)
 
     ws.on('message', async (message) => {
       const reply = await handleMessage(message.toString())
-      if (reply) ws.send(JSON.stringify(reply))
+      if (reply) {
+        ws.send(JSON.stringify(reply))
+
+        if (reply.type === 'match') {
+          clients[reply.data.matchedBy].send(
+            JSON.stringify({
+              type: 'match',
+              message: `Order matched`,
+              data: {
+                matchedBy: uid,
+                matchedAt: reply.data.matchedAt,
+                yourOrder: reply.data.matchedOrder,
+                matchedOrder: reply.data.yourOrder,
+              },
+            })
+          )
+        }
+      }
     })
 
     ws.on('close', () => {
@@ -39,6 +58,5 @@ import createMessageHandler from './handleMessage'
     })
 
     clients[uid] = ws
-    console.log(`connected:${uid}`)
   })
 })()
