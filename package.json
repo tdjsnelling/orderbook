@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec babel-node src/index.js",
     "start": "babel-node src/index.js",
-    "client": "babel-node client/index.js"
+    "client": "babel-node tools/client/index.js",
+    "stress": "babel-node tools/stresstest/index.js"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
