@@ -2809,10 +2809,10 @@ redis-parser@3.0.0:
   dependencies:
     redis-errors "^1.0.0"
 
-redis@^4.0.0-next.6:
-  version "4.0.0-next.6"
-  resolved "https://registry.yarnpkg.com/redis/-/redis-4.0.0-next.6.tgz#e962dc758f72ac53dc6df9aaac7e754f317d0860"
-  integrity sha512-Im4VVGf4reAr/jmglEchojTgY8E7bRhWF5W5LMVa0BTUut2SxOh5SOu1HMisW7LHCLBJNOYjc3j0LMndhqqcoA==
+redis@^4.0.0-rc.3:
+  version "4.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/redis/-/redis-4.0.0-rc.3.tgz#9cd9ef91b2f549550861cb2dc89cd7980598dcbb"
+  integrity sha512-yvijGYWp3aOvqpFgqovUWLWSdHgjUEtScqJmjTfUXj/4kEHuSW2TERFQelIBnrGeKh8//eYlLpCFKCjDYT4NQw==
   dependencies:
     cluster-key-slot "1.1.0"
     generic-pool "3.8.2"

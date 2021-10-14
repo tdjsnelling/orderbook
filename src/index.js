@@ -9,9 +9,8 @@ import createMessageHandler from './handleMessage'
   dotenv.config()
 
   const redisClient = createClient({
-    socket: {
-      url: process.env.REDIS_URL,
-    },
+    url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    password: process.env.REDIS_AUTH,
   })
 
   await redisClient.connect()
