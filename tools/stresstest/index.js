@@ -12,7 +12,7 @@ const sideMap = {
   sell: 1,
 }
 
-const numberOfClients = 5
+const numberOfClients = 10
 const sockets = Object.fromEntries(
   [...Array(numberOfClients)].map((_, i) => [`client${i}`, undefined])
 )
@@ -26,10 +26,12 @@ const pickRandom = (items) => {
   return items[index]
 }
 
+const randRange = (min, max) => Math.floor(Math.random() * (max - min)) + min
+
 const sendFromClient = (client, ws, OrderMessage) => {
   const randType = pickRandom(types)
   const randSymbol = pickRandom(symbols)
-  const randPrice = Math.floor(Math.random() * (maxPrice - minPrice)) + minPrice
+  const randPrice = randRange(minPrice, maxPrice)
 
   const msg = OrderMessage.create({
     uid: client,
@@ -47,7 +49,7 @@ const sendFromClient = (client, ws, OrderMessage) => {
 
   setTimeout(() => {
     sendFromClient(client, ws, OrderMessage)
-  }, 500)
+  }, randRange(300, 1300))
 }
 
 for (const client in sockets) {
@@ -58,6 +60,11 @@ for (const client in sockets) {
     const proto = await protobuf.load('./src/proto/order.proto')
     const OrderMessage = proto.lookupType('orderbook.Order')
     sendFromClient(client, ws, OrderMessage)
+  })
+  ws.on('message', (message) => {
+    const { type } = JSON.parse(message.toString())
+    if (type === 'order') console.log('queued')
+    if (type === 'match') console.log('matched')
   })
   sockets[client] = ws
 }

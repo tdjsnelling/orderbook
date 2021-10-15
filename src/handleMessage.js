@@ -33,6 +33,8 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
     return { type: 'order', error: 'User IDs do not match' }
   }
 
+  await redisClient.INCR('TOTAL_ORDERS')
+
   const { side, symbol, price } = message
 
   const ts = Date.now()
@@ -42,6 +44,7 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
   const matchedOrder = await matchOrder({ side, symbol, price, redisClient })
 
   if (matchedOrder) {
+    await redisClient.INCRBY('TOTAL_MATCHED', 2)
     return {
       type: 'match',
       message: `Order matched`,
