@@ -19,6 +19,10 @@ const ws = new WebSocket(options.server)
 ws.on('message', async (message) => {
   ui.log.write(`< ${message}`)
 })
+ws.on('close', () => {
+  ui.log.write('connection terminated')
+  process.exit(0)
+})
 
 const url = new URL(options.server)
 const uid = url.searchParams.get('user')

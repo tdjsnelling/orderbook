@@ -1,4 +1,5 @@
 import protobuf from 'protobufjs'
+import murmurhash from 'murmurhash'
 import matchOrder from './matchOrder'
 
 const createMessageHandler = (uid, redisClient) => async (rawMessage) => {
@@ -39,7 +40,8 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
 
   const ts = Date.now()
   const orderString = `${side}:${symbol}@${price}`
-  console.log(`order:${uid}:${orderString}`)
+  const hash = murmurhash.v3(`${orderString}-${uid}-${ts}`).toString(16)
+  console.log(`order:${uid}:${hash}:${orderString}`)
 
   const matchedOrder = await matchOrder({ side, symbol, price, redisClient })
 
@@ -51,13 +53,16 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
       data: {
         matchedBy: matchedOrder.uid,
         matchedAt: Date.now(),
-        yourOrder: { order: orderString, uid, ts },
+        yourOrder: { order: orderString, uid, ts, hash },
         matchedOrder,
       },
     }
   } else {
-    await redisClient.RPUSH(orderString, JSON.stringify({ uid, ts }))
-    return { type: 'order', message: `Order submitted to queue at ${ts}` }
+    await redisClient.RPUSH(orderString, JSON.stringify({ uid, ts, hash }))
+    return {
+      type: 'order',
+      message: `Order ${hash} submitted to queue at ${ts}`,
+    }
   }
 }
 
