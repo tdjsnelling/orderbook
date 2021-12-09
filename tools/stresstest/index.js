@@ -12,7 +12,7 @@ const sideMap = {
   sell: 1,
 }
 
-const numberOfClients = 10
+const numberOfClients = Number(process.env.CLIENTS) || 25
 const sockets = Object.fromEntries(
   [...Array(numberOfClients)].map((_, i) => [`client${i}`, undefined])
 )

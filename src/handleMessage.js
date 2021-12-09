@@ -8,7 +8,7 @@ const createMessageHandler = (uid, redisClient) => async (rawMessage) => {
 
   const proto = await protobuf.load('src/proto/order.proto')
 
-  console.log(`message:${uid}:${type}`)
+  if (process.env.LOG_ORDERS) console.log(`message:${uid}:${type}`)
 
   switch (type) {
     case 'order':
@@ -41,7 +41,7 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
   const ts = Date.now()
   const orderString = `${side}:${symbol}@${price}`
   const hash = murmurhash.v3(`${orderString}-${uid}-${ts}`).toString(16)
-  console.log(`order:${uid}:${hash}:${orderString}`)
+  if (process.env.LOG_ORDERS) console.log(`order:${uid}:${hash}:${orderString}`)
 
   const matchedOrder = await matchOrder({ side, symbol, price, redisClient })
 
