@@ -43,7 +43,7 @@ const sendFromClient = (client, ws, OrderMessage) => {
   const toSend = JSON.stringify({ type: 'order', data: b64 })
 
   if (ws.readyState === 1) {
-    console.log(`${client} sent ${randType}:${randSymbol}@${randPrice}`)
+    console.log(`> ${client} sent ${randType}:${randSymbol}@${randPrice}`)
     ws.send(toSend)
   }
 
@@ -61,10 +61,13 @@ for (const client in sockets) {
     const OrderMessage = proto.lookupType('orderbook.Order')
     sendFromClient(client, ws, OrderMessage)
   })
-  ws.on('message', (message) => {
-    const { type } = JSON.parse(message.toString())
-    if (type === 'order') console.log('queued')
-    if (type === 'match') console.log('matched')
+  ws.on('message', (msg) => {
+    const { type, data } = JSON.parse(msg.toString())
+    if (type === 'order') console.log(`< queued: ${data.uid} ${data.order}`)
+    if (type === 'match')
+      console.log(
+        `< matched: ${data.yourOrder.uid} ${data.yourOrder.order} <> ${data.matchedOrder.uid} ${data.matchedOrder.order}`
+      )
   })
   sockets[client] = ws
 }

@@ -49,7 +49,7 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
     await redisClient.INCRBY('TOTAL_MATCHED', 2)
     return {
       type: 'match',
-      message: `Order matched`,
+      message: 'Order matched',
       data: {
         matchedBy: matchedOrder.uid,
         matchedAt: Date.now(),
@@ -61,7 +61,13 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
     await redisClient.RPUSH(orderString, JSON.stringify({ uid, ts, hash }))
     return {
       type: 'order',
-      message: `Order ${hash} submitted to queue at ${ts}`,
+      message: 'Order submitted to queue',
+      data: {
+        order: orderString,
+        uid,
+        ts,
+        hash,
+      },
     }
   }
 }
