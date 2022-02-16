@@ -21,6 +21,20 @@ import createMessageHandler from './handleMessage'
     port: process.env.PORT || 9696,
   })
 
+  if (process.env.ENABLE_EVENTS) {
+    const eventsWss = new WebSocketServer({
+      host: '0.0.0.0',
+      port: process.env.EVENTS_PORT || 9697,
+    })
+    const subscriber = redisClient.duplicate()
+    await subscriber.connect()
+    await subscriber.PSUBSCRIBE('__key*__:*', (message) => {
+      eventsWss.clients.forEach((ws) => {
+        ws.send(message)
+      })
+    })
+  }
+
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url, process.env.BASE_URL)
     const uid = url.searchParams.get('user')
