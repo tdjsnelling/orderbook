@@ -7,6 +7,7 @@ RUN yarn build
 
 FROM node:16-alpine
 WORKDIR /app
+COPY src/proto ./src/proto
 COPY --from=builder /app/dist/index.js ./index.js
 EXPOSE 9696
 CMD ["node", "/app/index.js"]
