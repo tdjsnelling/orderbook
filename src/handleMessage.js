@@ -124,7 +124,9 @@ const handleView = async ({ data, uid, proto, redisClient }) => {
     stop
   )
 
-  return { type: 'query', data: JSON.parse(orders) }
+  console.log('ORDERS:', orders)
+
+  return { type: 'query', data: orders.map((o) => JSON.parse(o)) }
 }
 
 export default createMessageHandler
