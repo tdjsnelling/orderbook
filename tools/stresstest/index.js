@@ -40,7 +40,7 @@ const sendFromClient = (client, ws, OrderMessage) => {
     price: randPrice,
   })
   const b64 = OrderMessage.encode(msg).finish().toString('base64')
-  const toSend = JSON.stringify({ type: 'order', data: b64 })
+  const toSend = `0|${b64}`
 
   if (ws.readyState === 1) {
     console.log(`> ${client} sent ${randType}:${randSymbol}@${randPrice}`)

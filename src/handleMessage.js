@@ -2,11 +2,18 @@ import protobuf from 'protobufjs'
 import murmurhash from 'murmurhash'
 import matchOrder from './matchOrder'
 
-const createMessageHandler = (uid, redisClient) => async (rawMessage) => {
-  const json = JSON.parse(rawMessage)
-  const { type, data } = json
+export const messageTypes = {
+  0: 'order',
+  1: 'query',
+  2: 'view',
+}
+
+const createMessageHandler = (uid, redisClient) => async (message) => {
+  const [messageType, data] = message.split('|')
 
   const proto = await protobuf.load('src/proto/order.proto')
+
+  const type = messageTypes[messageType]
 
   if (process.env.LOG_ORDERS) console.log(`message:${uid}:${type}`)
 
@@ -18,7 +25,7 @@ const createMessageHandler = (uid, redisClient) => async (rawMessage) => {
     case 'view':
       return await handleView({ data, uid, proto, redisClient })
     default:
-      return { error: `Message type “${type}” unknown` }
+      return { error: `Message type “${messageType}” unknown` }
   }
 }
 
