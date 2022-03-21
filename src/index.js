@@ -25,7 +25,6 @@ import createMessageHandler from './handleMessage'
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url, process.env.BASE_URL)
     const uid = url.searchParams.get('user')
-    const key = url.searchParams.get('key')
 
     ws.clientUid = uid
     console.log(`connected:${uid}`)

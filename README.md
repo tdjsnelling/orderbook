@@ -34,6 +34,8 @@ Once started, the server provides a websocket endpoint on the configured port.
 
 When connecting to the websocket, the server expects a URL query parameter `user` to identify the connection. For example, you could connect to `wss://example.com/?user=alice`.
 
+The engine itself provides no method for authentication. Any client can connect to the websocket with any ID.
+
 Once connected to, the endpoint expects messages in the format:
 
 ```
