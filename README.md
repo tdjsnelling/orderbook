@@ -34,7 +34,7 @@ Once started, the server provides a websocket endpoint on the configured port.
 
 When connecting to the websocket, the server expects a URL query parameter `user` to identify the connection. For example, you could connect to `wss://example.com/?user=alice`.
 
-The engine itself provides no method for authentication. Any client can connect to the websocket with any ID.
+The engine itself provides no method for authentication. Any client can connect to the websocket with any unique ID. If an ID is already in use, new connections with the same ID will be rejected.
 
 Once connected to, the endpoint expects messages in the format:
 
@@ -56,7 +56,7 @@ The main message type used to push new orders. An order message consists of 4 pa
 
 * `uid`: the identifier of the user submitting the order
 * `side`: whether the order is buy (0) or sell (1)
-* `symbol`: the symbol or identifier of the item the order is for, e.g. 'BTC' or 'AAPL'
+* `symbol`: the symbol or identifier of the item the order is for, e.g. 'BTC/GBP' or 'AAPL'
 * `price`: the desired buy/sell price, in the smallest denomination. This field should not contain decimals
 
 To submit an order, a protobuf message must be assembled from the above fields, and then sent as a base64 string, using the `order` message type.
@@ -69,7 +69,7 @@ The order:
 {
   "uid": "alice",
   "side": 0,
-  "symbol": "BTC",
+  "symbol": "BTC/GBP",
   "price": 4088820
 }
 ```
@@ -95,13 +95,13 @@ You will receive a JSON response listing the number of buy or sell orders at eac
 For example, if the following orders are made:
 
 ```
-buy BTC 1000
-sell BTC 2000
-buy BTC 1001
-buy BTC 1000
+buy BTC/GBP 1000
+sell BTC/GBP 2000
+buy BTC/GBP 1001
+buy BTC/GBP 1000
 ```
 
-Querying `buy BTC` would give the response:
+Querying `buy BTC/GBP` would give the response:
 
 ```json
 {
@@ -110,7 +110,7 @@ Querying `buy BTC` would give the response:
 }
 ```
 
-And querying `sell BTC` would give the response:
+And querying `sell BTC/GBP` would give the response:
 
 ```json
 {
@@ -126,11 +126,15 @@ View messages require a `uid`, `side`, `symbol` and `price`. Additionally, they 
 
 A `start` of `0` and `stop` of `4` will return the first 5 orders, oldest first. `5 10` will return the next 5, and so on. If `stop` is greater than the max index, then `start` until the final order will be returned.
 
-### Order statistics
+### Responses
+
+Responses are JSON. They will always contain a `type` field, and either a `data` or `error` field.
+
+## Order statistics
 
 Redis also stores the fields `TOTAL_ORDERS` and `TOTAL_MATCHED` to track the number of orders processed.
 
-### Example client
+## Example client
 
 This repo provides a basic example client in `tools/client`.
 
@@ -143,9 +147,9 @@ $ yarn client -s "ws://localhost:9696/?user=alice"
 And then commands can be issued:
 
 ```
-alice> order buy BTC 1000
-alice> query buy BTC 1000
-alice> view buy BTC 1000 0 0
+alice> order buy BTC/GBP 1000
+alice> query buy BTC/GBP 1000
+alice> view buy BTC/GBP 1000 0 0
 ```
 
 ## License

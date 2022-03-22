@@ -17,15 +17,25 @@ const createMessageHandler = (uid, redisClient) => async (message) => {
 
   if (process.env.LOG_ORDERS) console.log(`message:${uid}:${type}`)
 
-  switch (type) {
-    case 'order':
-      return await handleOrder({ data, uid, proto, redisClient })
-    case 'query':
-      return await handleQuery({ data, uid, proto, redisClient })
-    case 'view':
-      return await handleView({ data, uid, proto, redisClient })
-    default:
-      return { error: `Message type “${messageType}” unknown` }
+  try {
+    switch (type) {
+      case 'order':
+        return await handleOrder({ data, uid, proto, redisClient })
+      case 'query':
+        return await handleQuery({ data, uid, proto, redisClient })
+      case 'view':
+        return await handleView({ data, uid, proto, redisClient })
+      default:
+        return {
+          type: 'unknown',
+          error: `Message type “${messageType}” unknown`,
+        }
+    }
+  } catch (e) {
+    return {
+      type,
+      error: `Failed to handle message. Actual error: ${e.message}`,
+    }
   }
 }
 
@@ -38,7 +48,10 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
 
   if (uid !== message.uid) {
     console.log('message rejected: uid mismatch')
-    return { type: 'order', error: 'User IDs do not match' }
+    return {
+      type: 'order',
+      error: 'Connected user ID does not match message user ID.',
+    }
   }
 
   await redisClient.INCR('TOTAL_ORDERS')

@@ -26,6 +26,16 @@ import createMessageHandler from './handleMessage'
     const url = new URL(req.url, process.env.BASE_URL)
     const uid = url.searchParams.get('user')
 
+    const existingClient = Array.from(wss.clients).find(
+      (sock) => sock.clientUid === uid
+    )
+
+    if (existingClient) {
+      ws.send(`error: client with uid ${uid} is already connected`)
+      ws.close()
+      return
+    }
+
     ws.clientUid = uid
     console.log(`connected:${uid}`)
 
