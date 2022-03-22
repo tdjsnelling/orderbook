@@ -144,12 +144,18 @@ It can be started with:
 $ yarn client -s "ws://localhost:9696/?user=alice"
 ```
 
-And then commands can be issued:
+Then commands can be issued, and messages/responses will be printed:
 
 ```
-alice> order buy BTC/GBP 1000
-alice> query buy BTC/GBP 1000
-alice> view buy BTC/GBP 1000 0 0
+? alice> order buy BTC/GBP 1000
+> 0|CgVhbGljZRAAGgdCVEMvR0JQIQAAAAAAQI9A
+< {"type":"order","message":"Order submitted to queue","data":{"order":"0:BTC/GBP@1000","uid":"alice","ts":1647977737275,"hash":"3a45d46"}}
+? alice> query buy BTC/GBP 1000
+> 1|CgVhbGljZRAAGgdCVEMvR0JQ
+< {"type":"query","data":{"1000":1}}
+? alice> view buy BTC/GBP 1000 0 0
+> 2|CgVhbGljZRAAGgdCVEMvR0JQIQAAAAAAQI9AKAAwAA==
+< {"type":"query","data":[{"uid":"alice","ts":1647977737275,"hash":"3a45d46"}]}
 ```
 
 ## License
