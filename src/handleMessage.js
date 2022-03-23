@@ -2,23 +2,40 @@ import protobuf from 'protobufjs'
 import murmurhash from 'murmurhash'
 import matchOrder from './matchOrder'
 
-const createMessageHandler = (uid, redisClient) => async (rawMessage) => {
-  const json = JSON.parse(rawMessage)
-  const { type, data } = json
+export const messageTypes = {
+  0: 'order',
+  1: 'query',
+  2: 'view',
+}
+
+const createMessageHandler = (uid, redisClient) => async (message) => {
+  const [messageType, data] = message.split('|')
 
   const proto = await protobuf.load('src/proto/order.proto')
 
-  console.log(`message:${uid}:${type}`)
+  const type = messageTypes[messageType]
 
-  switch (type) {
-    case 'order':
-      return await handleOrder({ data, uid, proto, redisClient })
-    case 'query':
-      return await handleQuery({ data, uid, proto, redisClient })
-    case 'view':
-      return await handleView({ data, uid, proto, redisClient })
-    default:
-      return { error: `Message type “${type}” unknown` }
+  if (process.env.LOG_ORDERS) console.log(`message:${uid}:${type}`)
+
+  try {
+    switch (type) {
+      case 'order':
+        return await handleOrder({ data, uid, proto, redisClient })
+      case 'query':
+        return await handleQuery({ data, uid, proto, redisClient })
+      case 'view':
+        return await handleView({ data, uid, proto, redisClient })
+      default:
+        return {
+          type: 'unknown',
+          error: `Message type “${messageType}” unknown`,
+        }
+    }
+  } catch (e) {
+    return {
+      type,
+      error: `Failed to handle message. Actual error: ${e.message}`,
+    }
   }
 }
 
@@ -31,7 +48,10 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
 
   if (uid !== message.uid) {
     console.log('message rejected: uid mismatch')
-    return { type: 'order', error: 'User IDs do not match' }
+    return {
+      type: 'order',
+      error: 'Connected user ID does not match message user ID.',
+    }
   }
 
   await redisClient.INCR('TOTAL_ORDERS')
@@ -41,7 +61,7 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
   const ts = Date.now()
   const orderString = `${side}:${symbol}@${price}`
   const hash = murmurhash.v3(`${orderString}-${uid}-${ts}`).toString(16)
-  console.log(`order:${uid}:${hash}:${orderString}`)
+  if (process.env.LOG_ORDERS) console.log(`order:${uid}:${hash}:${orderString}`)
 
   const matchedOrder = await matchOrder({ side, symbol, price, redisClient })
 
@@ -49,7 +69,7 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
     await redisClient.INCRBY('TOTAL_MATCHED', 2)
     return {
       type: 'match',
-      message: `Order matched`,
+      message: 'Order matched',
       data: {
         matchedBy: matchedOrder.uid,
         matchedAt: Date.now(),
@@ -61,7 +81,13 @@ const handleOrder = async ({ data, uid, proto, redisClient }) => {
     await redisClient.RPUSH(orderString, JSON.stringify({ uid, ts, hash }))
     return {
       type: 'order',
-      message: `Order ${hash} submitted to queue at ${ts}`,
+      message: 'Order submitted to queue',
+      data: {
+        order: orderString,
+        uid,
+        ts,
+        hash,
+      },
     }
   }
 }
@@ -111,7 +137,9 @@ const handleView = async ({ data, uid, proto, redisClient }) => {
     stop
   )
 
-  return { type: 'query', data: JSON.parse(orders) }
+  console.log('ORDERS:', orders)
+
+  return { type: 'query', data: orders.map((o) => JSON.parse(o)) }
 }
 
 export default createMessageHandler

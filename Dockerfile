@@ -1,5 +1,13 @@
-FROM node:14-alpine
-COPY . .
-RUN yarn
+FROM node:16-alpine AS builder
+WORKDIR /app
+COPY package.json ./package.json
+COPY src ./src
+RUN yarn install
+RUN yarn build
+
+FROM node:16-alpine
+WORKDIR /app
+COPY src/proto ./src/proto
+COPY --from=builder /app/dist/index.js ./index.js
 EXPOSE 9696
-CMD ["yarn", "start"]
+CMD ["node", "/app/index.js"]

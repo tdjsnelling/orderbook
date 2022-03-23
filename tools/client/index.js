@@ -2,6 +2,7 @@ const { program } = require('commander')
 import inquirer from 'inquirer'
 import protobuf from 'protobufjs'
 import WebSocket from 'ws'
+import { messageTypes } from '../../src/handleMessage'
 
 program.version('0.0.1')
 program.option('-s, --server <url>', 'server url')
@@ -30,7 +31,10 @@ const uid = url.searchParams.get('user')
 const send = (Message, type, payload) => {
   const msg = Message.create(payload)
   const b64 = Message.encode(msg).finish().toString('base64')
-  const toSend = JSON.stringify({ type, data: b64 })
+  const [messageType] = Object.entries(messageTypes).find(
+    ([, val]) => val === type
+  )
+  const toSend = `${messageType}|${b64}`
   ui.log.write(`> ${toSend}`)
   ws.send(toSend)
 }

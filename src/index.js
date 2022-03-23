@@ -8,6 +8,8 @@ import createMessageHandler from './handleMessage'
 ;(async () => {
   dotenv.config()
 
+  let messagesPerSec = 0
+
   const redisClient = createClient({
     url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
     password: process.env.REDIS_AUTH,
@@ -15,7 +17,6 @@ import createMessageHandler from './handleMessage'
 
   await redisClient.connect()
 
-  const clients = {}
   const wss = new WebSocketServer({
     host: '0.0.0.0',
     port: process.env.PORT || 9696,
@@ -38,8 +39,18 @@ import createMessageHandler from './handleMessage'
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url, process.env.BASE_URL)
     const uid = url.searchParams.get('user')
-    const key = url.searchParams.get('key')
 
+    const existingClient = Array.from(wss.clients).find(
+      (sock) => sock.clientUid === uid
+    )
+
+    if (existingClient) {
+      ws.send(`error: client with uid ${uid} is already connected`)
+      ws.close()
+      return
+    }
+
+    ws.clientUid = uid
     console.log(`connected:${uid}`)
 
     const handleMessage = createMessageHandler(uid, redisClient)
@@ -50,26 +61,39 @@ import createMessageHandler from './handleMessage'
         ws.send(JSON.stringify(reply))
 
         if (reply.type === 'match') {
-          clients[reply.data.matchedBy].send(
-            JSON.stringify({
-              type: 'match',
-              message: `Order matched`,
-              data: {
-                matchedBy: uid,
-                matchedAt: reply.data.matchedAt,
-                yourOrder: reply.data.matchedOrder,
-                matchedOrder: reply.data.yourOrder,
-              },
-            })
+          const client = Array.from(wss.clients).find(
+            (sock) => sock.clientUid === reply.data.matchedBy
           )
+          if (client) {
+            client.send(
+              JSON.stringify({
+                type: 'match',
+                message: `Order matched`,
+                data: {
+                  matchedBy: uid,
+                  matchedAt: reply.data.matchedAt,
+                  yourOrder: reply.data.matchedOrder,
+                  matchedOrder: reply.data.yourOrder,
+                },
+              })
+            )
+          } else {
+            console.log(`client lost: ${uid}`)
+          }
         }
       }
+      messagesPerSec += 1
     })
 
     ws.on('close', () => {
       console.log(`disconnected:${uid}`)
     })
-
-    clients[uid] = ws
   })
+
+  setInterval(() => {
+    if (messagesPerSec > 0) {
+      console.log(`current load: ${messagesPerSec} messages/sec`)
+      messagesPerSec = 0
+    }
+  }, 1000)
 })()

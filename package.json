@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon --exec babel-node src/index.js",
-    "start": "babel-node src/index.js",
+    "build": "esbuild src/index.js --bundle --platform=node --target=node16.14 --outfile=dist/index.js",
+    "start": "node dist/index.js",
     "client": "babel-node tools/client/index.js",
     "stress": "babel-node tools/stresstest/index.js"
   },
@@ -21,6 +22,7 @@
     "@babel/node": "^7.14.9",
     "@babel/preset-env": "^7.15.0",
     "commander": "^8.2.0",
+    "esbuild": "^0.14.21",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",
