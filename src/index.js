@@ -22,6 +22,7 @@ import createMessageHandler from './handleMessage'
     port: process.env.PORT || 9696,
   })
 
+  // requires `CONFIG SET notify-keyspace-events El` set on Redis server
   if (process.env.ENABLE_EVENTS) {
     const eventsWss = new WebSocketServer({
       host: '0.0.0.0',
@@ -29,9 +30,9 @@ import createMessageHandler from './handleMessage'
     })
     const subscriber = redisClient.duplicate()
     await subscriber.connect()
-    await subscriber.PSUBSCRIBE('__key*__:*', (message) => {
+    await subscriber.PSUBSCRIBE('__keyevent*', (message, channel) => {
       eventsWss.clients.forEach((ws) => {
-        ws.send(message)
+        ws.send(`${channel}|${message}`)
       })
     })
   }
