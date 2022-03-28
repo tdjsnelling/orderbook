@@ -17,9 +17,9 @@ const sockets = Object.fromEntries(
   [...Array(numberOfClients)].map((_, i) => [`client${i}`, undefined])
 )
 const types = ['buy', 'sell']
-const symbols = ['AAA', 'BBB', 'CCC']
-const minPrice = 10
-const maxPrice = 20
+const symbols = ['AAA']
+const minPrice = 47500
+const maxPrice = 48000
 
 const pickRandom = (items) => {
   const index = Math.floor(Math.random() * items.length)
@@ -32,12 +32,15 @@ const sendFromClient = (client, ws, OrderMessage) => {
   const randType = pickRandom(types)
   const randSymbol = pickRandom(symbols)
   const randPrice = randRange(minPrice, maxPrice)
+  const sellEdge = randRange(1, maxPrice - minPrice)
+
+  const price = randType === 'sell' ? maxPrice + sellEdge : randPrice
 
   const msg = OrderMessage.create({
     uid: client,
     side: sideMap[randType],
     symbol: randSymbol,
-    price: randPrice,
+    price,
   })
   const b64 = OrderMessage.encode(msg).finish().toString('base64')
   const toSend = `0|${b64}`
